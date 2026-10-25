@@ -1,0 +1,384 @@
+--// KAWAII KEY SYSTEM GUI (pink / My Melody inspired) //--
+
+-- ============ CONFIG (edit these) ============
+local CONFIG = {
+	Name    = "add bot on roblox for key to be sent!",                -- title shown on the GUI
+	KeyLink = "https://rbx.tg/kjE-exQg",     -- link copied by the "Copy Link" button
+	Key     = "PUT YOUR KEY HERE",            -- correct key (used by the default check below)
+}
+
+-- Custom key check. Replace the body with an API request if you use one.
+-- Return true if the key is valid, false if not.
+local function validateKey(input)
+	return input == CONFIG.Key
+end
+
+-- Runs after a valid key is entered. Put your main script here.
+local function onSuccess()
+	print("Key accepted!")
+	-- loadstring(game:HttpGet("YOUR_SCRIPT_URL"))()
+end
+-- =============================================
+
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+
+-- Colors
+local PINK_BG     = Color3.fromRGB(255, 232, 241)
+local PINK_BAND   = Color3.fromRGB(255, 165, 202)
+local PINK_HOT    = Color3.fromRGB(255, 105, 168)
+local PINK_SOFT   = Color3.fromRGB(255, 196, 222)
+local PINK_DARK   = Color3.fromRGB(214, 84, 138)
+local WHITE       = Color3.fromRGB(255, 255, 255)
+local TEXT_DARK   = Color3.fromRGB(140, 70, 100)
+local GREEN       = Color3.fromRGB(110, 200, 150)
+local RED         = Color3.fromRGB(235, 90, 110)
+
+-- Parent the GUI wherever it is allowed
+local parent
+pcall(function()
+	parent = (gethui and gethui()) or game:GetService("CoreGui")
+end)
+if not parent then
+	parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+end
+
+local old = parent:FindFirstChild("KawaiiKeyGui")
+if old then old:Destroy() end
+
+local function tween(obj, props, t)
+	TweenService:Create(obj, TweenInfo.new(t or 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props):Play()
+end
+
+local function round(obj, radius)
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, radius)
+	c.Parent = obj
+	return c
+end
+
+local function stroke(obj, color, thickness)
+	local s = Instance.new("UIStroke")
+	s.Color = color
+	s.Thickness = thickness or 1
+	s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	s.Parent = obj
+	return s
+end
+
+-- ScreenGui
+local gui = Instance.new("ScreenGui")
+gui.Name = "KawaiiKeyGui"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent = parent
+
+-- Main window
+local main = Instance.new("Frame")
+main.Name = "Main"
+main.Size = UDim2.new(0, 400, 0, 250)
+main.Position = UDim2.new(0.5, -200, 0.5, -105)
+main.BackgroundColor3 = PINK_BG
+main.BorderSizePixel = 0
+main.Parent = gui
+round(main, 18)
+stroke(main, PINK_BAND, 3)
+
+-- Bunny ears (pure UI shapes)
+local function makeEar(xOffset, rotation)
+	local ear = Instance.new("Frame")
+	ear.Size = UDim2.new(0, 56, 0, 96)
+	ear.Position = UDim2.new(0, xOffset, 0, -78)
+	ear.Rotation = rotation
+	ear.BackgroundColor3 = PINK_BG
+	ear.BorderSizePixel = 0
+	ear.ZIndex = 0
+	ear.Parent = main
+	round(ear, 28)
+	stroke(ear, PINK_BAND, 3)
+
+	local inner = Instance.new("Frame")
+	inner.Size = UDim2.new(0, 28, 0, 62)
+	inner.Position = UDim2.new(0.5, -14, 0, 14)
+	inner.BackgroundColor3 = PINK_SOFT
+	inner.BorderSizePixel = 0
+	inner.ZIndex = 0
+	inner.Parent = ear
+	round(inner, 14)
+	return ear
+end
+makeEar(70, -10)
+makeEar(274, 10)
+
+-- Floating hearts layer (clipped to the window)
+local hearts = Instance.new("Frame")
+hearts.Name = "Hearts"
+hearts.Size = UDim2.new(1, 0, 1, 0)
+hearts.BackgroundTransparency = 1
+hearts.ClipsDescendants = true
+hearts.Parent = main
+round(hearts, 18)
+
+local symbols = {"♥", "♡", "✿", "★"}
+local palette = {PINK_HOT, PINK_BAND, PINK_SOFT, Color3.fromRGB(255, 140, 185)}
+
+local function spawnHeart(burst)
+	local h = Instance.new("TextLabel")
+	h.BackgroundTransparency = 1
+	h.Text = symbols[math.random(1, #symbols)]
+	h.TextColor3 = palette[math.random(1, #palette)]
+	h.TextSize = math.random(12, 22)
+	h.Font = Enum.Font.GothamBold
+	h.Size = UDim2.new(0, 20, 0, 20)
+	h.TextTransparency = 0.3
+	h.Parent = hearts
+
+	if burst then
+		h.Position = UDim2.new(0.5, -10, 0.5, -10)
+		local goal = UDim2.new(math.random(), -10, math.random(), -10)
+		TweenService:Create(h, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{Position = goal, TextTransparency = 1}):Play()
+		task.delay(1, function() h:Destroy() end)
+	else
+		h.Position = UDim2.new(math.random(), -10, 1, 4)
+		local t = math.random(30, 50) / 10
+		TweenService:Create(h, TweenInfo.new(t, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+			{Position = UDim2.new(h.Position.X.Scale, -10, -0.1, 0), TextTransparency = 1}):Play()
+		task.delay(t, function() h:Destroy() end)
+	end
+end
+
+task.spawn(function()
+	while gui.Parent do
+		spawnHeart(false)
+		task.wait(0.8)
+	end
+end)
+
+-- Pink "hood" header band
+local band = Instance.new("Frame")
+band.Name = "Header"
+band.Size = UDim2.new(1, 0, 0, 74)
+band.BackgroundColor3 = PINK_BAND
+band.BorderSizePixel = 0
+band.Parent = main
+round(band, 18)
+
+local bandFill = Instance.new("Frame")
+bandFill.Size = UDim2.new(1, 0, 0, 20)
+bandFill.Position = UDim2.new(0, 0, 1, -20)
+bandFill.BackgroundColor3 = PINK_BAND
+bandFill.BorderSizePixel = 0
+bandFill.Parent = band
+
+-- Flower accent on the right ear base
+local flower = Instance.new("TextLabel")
+flower.Size = UDim2.new(0, 30, 0, 30)
+flower.Position = UDim2.new(1, -110, 0, -14)
+flower.BackgroundTransparency = 1
+flower.Text = "✿"
+flower.TextColor3 = PINK_HOT
+flower.Font = Enum.Font.GothamBold
+flower.TextSize = 30
+flower.Parent = main
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -70, 0, 34)
+title.Position = UDim2.new(0, 20, 0, 12)
+title.BackgroundTransparency = 1
+title.Text = CONFIG.Name .. " ♡"
+title.TextColor3 = WHITE
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Font = Enum.Font.FredokaOne
+title.TextSize = 26
+title.Parent = band
+local titleStroke = Instance.new("UIStroke")
+titleStroke.Color = PINK_DARK
+titleStroke.Thickness = 1.5
+titleStroke.Parent = title
+
+local subtitle = Instance.new("TextLabel")
+subtitle.Size = UDim2.new(1, -40, 0, 18)
+subtitle.Position = UDim2.new(0, 22, 0, 46)
+subtitle.BackgroundTransparency = 1
+subtitle.Text = "enter your key to continue ✿"
+subtitle.TextColor3 = WHITE
+subtitle.TextXAlignment = Enum.TextXAlignment.Left
+subtitle.Font = Enum.Font.GothamMedium
+subtitle.TextSize = 13
+subtitle.Parent = band
+
+-- Close button
+local close = Instance.new("TextButton")
+close.Size = UDim2.new(0, 30, 0, 30)
+close.Position = UDim2.new(1, -44, 0, 14)
+close.BackgroundColor3 = PINK_SOFT
+close.Text = "x"
+close.TextColor3 = PINK_DARK
+close.Font = Enum.Font.FredokaOne
+close.TextSize = 16
+close.AutoButtonColor = false
+close.Parent = band
+round(close, 15)
+
+close.MouseEnter:Connect(function() tween(close, {BackgroundColor3 = PINK_HOT, TextColor3 = WHITE}) end)
+close.MouseLeave:Connect(function() tween(close, {BackgroundColor3 = PINK_SOFT, TextColor3 = PINK_DARK}) end)
+close.MouseButton1Click:Connect(function()
+	tween(main, {Size = UDim2.new(0, 400, 0, 0)}, 0.25)
+	task.wait(0.25)
+	gui:Destroy()
+end)
+
+-- Key input
+local inputBox = Instance.new("TextBox")
+inputBox.Size = UDim2.new(1, -40, 0, 46)
+inputBox.Position = UDim2.new(0, 20, 0, 92)
+inputBox.BackgroundColor3 = WHITE
+inputBox.Text = ""
+inputBox.PlaceholderText = "paste your key here ♡"
+inputBox.PlaceholderColor3 = Color3.fromRGB(215, 160, 185)
+inputBox.TextColor3 = TEXT_DARK
+inputBox.Font = Enum.Font.GothamMedium
+inputBox.TextSize = 15
+inputBox.ClearTextOnFocus = false
+inputBox.Parent = main
+round(inputBox, 23)
+local inputStroke = stroke(inputBox, PINK_SOFT, 2.5)
+
+inputBox.Focused:Connect(function() tween(inputStroke, {Color = PINK_HOT}) end)
+inputBox.FocusLost:Connect(function() tween(inputStroke, {Color = PINK_SOFT}) end)
+
+-- Button factory
+local function makeButton(text, position, color, textColor, outline)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(0.5, -26, 0, 44)
+	b.Position = position
+	b.BackgroundColor3 = color
+	b.Text = text
+	b.TextColor3 = textColor
+	b.Font = Enum.Font.FredokaOne
+	b.TextSize = 17
+	b.AutoButtonColor = false
+	b.Parent = main
+	round(b, 22)
+	if outline then stroke(b, outline, 2.5) end
+
+	local hover = color:Lerp(WHITE, 0.25)
+	b.MouseEnter:Connect(function() tween(b, {BackgroundColor3 = hover}) end)
+	b.MouseLeave:Connect(function() tween(b, {BackgroundColor3 = color}) end)
+	b.MouseButton1Down:Connect(function() tween(b, {Size = UDim2.new(0.5, -30, 0, 40)}, 0.08) end)
+	b.MouseButton1Up:Connect(function() tween(b, {Size = UDim2.new(0.5, -26, 0, 44)}, 0.08) end)
+	return b
+end
+
+-- Left: Check Key | Right: Copy Link
+local checkBtn = makeButton("Check Key ♡", UDim2.new(0, 20, 0, 154), PINK_HOT, WHITE, nil)
+local copyBtn  = makeButton("Copy Link ✿", UDim2.new(0.5, 6, 0, 154), WHITE, PINK_HOT, PINK_BAND)
+
+-- Status label
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(1, -40, 0, 22)
+status.Position = UDim2.new(0, 20, 1, -34)
+status.BackgroundTransparency = 1
+status.Text = "waiting for your key... ♡"
+status.TextColor3 = Color3.fromRGB(205, 140, 170)
+status.Font = Enum.Font.GothamMedium
+status.TextSize = 13
+status.Parent = main
+
+local function setStatus(text, color)
+	status.Text = text
+	status.TextColor3 = color
+end
+
+-- Copy Link logic
+copyBtn.MouseButton1Click:Connect(function()
+	local copy = setclipboard or toclipboard or (syn and syn.write_clipboard)
+	if copy then
+		copy(CONFIG.KeyLink)
+		setStatus("link copied! ♡", GREEN)
+		for _ = 1, 5 do spawnHeart(true) end
+	else
+		inputBox.Text = CONFIG.KeyLink
+		setStatus("no clipboard support, link is in the box ✿", PINK_DARK)
+	end
+end)
+
+-- Check Key logic
+local checking = false
+checkBtn.MouseButton1Click:Connect(function()
+	if checking then return end
+	local key = inputBox.Text:gsub("%s+", "")
+	if key == "" then
+		setStatus("please enter a key first ✿", PINK_DARK)
+		return
+	end
+
+	checking = true
+	setStatus("checking your key... ♡", Color3.fromRGB(205, 140, 170))
+	task.wait(0.4)
+
+	local ok, valid = pcall(validateKey, key)
+	if ok and valid then
+		setStatus("yay! key accepted ♡", GREEN)
+		tween(inputStroke, {Color = GREEN})
+		for _ = 1, 16 do
+			spawnHeart(true)
+			task.wait(0.03)
+		end
+		task.wait(0.6)
+		gui:Destroy()
+		onSuccess()
+	else
+		setStatus("oops, invalid key. try again ♡", RED)
+		tween(inputStroke, {Color = RED})
+		local origin = inputBox.Position
+		for _ = 1, 3 do
+			tween(inputBox, {Position = origin + UDim2.new(0, 6, 0, 0)}, 0.05)
+			task.wait(0.05)
+			tween(inputBox, {Position = origin - UDim2.new(0, 6, 0, 0)}, 0.05)
+			task.wait(0.05)
+		end
+		tween(inputBox, {Position = origin}, 0.05)
+		task.wait(0.8)
+		tween(inputStroke, {Color = PINK_SOFT})
+	end
+	checking = false
+end)
+
+-- Layering: everything except the hearts layer sits above it
+for _, child in ipairs(main:GetChildren()) do
+	if child:IsA("GuiObject") and child ~= hearts then
+		child.ZIndex = 2
+	end
+end
+hearts.ZIndex = 1
+
+-- Dragging (by the header)
+local dragging, dragStart, startPos
+band.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = main.Position
+	end
+end)
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - dragStart
+		main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
+end)
+
+-- Open animation
+main.Size = UDim2.new(0, 400, 0, 0)
+tween(main, {Size = UDim2.new(0, 400, 0, 250)}, 0.35)"
+
+
